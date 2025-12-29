@@ -13,10 +13,10 @@ npm install --save-dev nodemon
 ```
 
 # Required Packages Info 
-+axios: HTTP client for web scraping
-+cheerio: HTML parser for scraping
-+cors: Enable Cross-Origin Resource Sharing
-+body-parser: Parse incoming request bodies
++ axios: HTTP client for web scraping
++ cheerio: HTML parser for scraping
++ cors: Enable Cross-Origin Resource Sharing
++ body-parser: Parse incoming request bodies
 
 # Database Setup
 Used MySql Database where kept table named "articles" which included the id, title, url, author, publish_date, excerpt, tags, image_url, created_at and updated_at as the differnet columns defined.
@@ -70,6 +70,10 @@ Beyond_Chats/
 + Get All Articles
   
   <img width="1380" height="880" alt="Screenshot 2025-12-29 134045" src="https://github.com/user-attachments/assets/0c1851a4-5993-439e-a100-0f396f5a2143" />
+
+## Issued that occured while getting the articles
+
+The scraper is storing tags as a plain string like "ai chatbot" instead of proper JSON like ["ai chatbot"]. This error occurs because the tags field in my MySQL database is stored as a string, but it's not valid JSON format. For that, created the fixDatabase.js in the root directory. It fixes the problem of invalid JSON format in the tags column, converted them into arrays.
 
 + Update Article
   
