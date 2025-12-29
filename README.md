@@ -11,9 +11,15 @@ npm init -y
 npm install express mysql2 axios cheerio dotenv cors body-parser
 npm install --save-dev nodemon
 ```
-# Database Setup
 
-Use MySql Database where kept table named "articles" which included the id, title, url, author, publish_date, excerpt, tags, image_url, created_at and updated_at as the differnet columns defined.
+# Required Packages Info 
++axios: HTTP client for web scraping
++cheerio: HTML parser for scraping
++cors: Enable Cross-Origin Resource Sharing
++body-parser: Parse incoming request bodies
+
+# Database Setup
+Used MySql Database where kept table named "articles" which included the id, title, url, author, publish_date, excerpt, tags, image_url, created_at and updated_at as the differnet columns defined.
 ```
 CREATE DATABASE beyoundChats_blogs;
 
@@ -51,21 +57,26 @@ Beyond_Chats/
 ```
 
 # Let's Test the APIs -
-  Used Postman for that testing the APIs testpoints
+  Used Postman for testing the APIs testpoints, performed the CRUD operations 
 
 + Scrape and store Articles
+  
   <img width="1349" height="841" alt="Screenshot 2025-12-29 131800" src="https://github.com/user-attachments/assets/48fe487c-207b-4629-be86-378c7c6fd157" />
   
 + Create the Article
+  
   <img width="1381" height="863" alt="Screenshot 2025-12-29 132531" src="https://github.com/user-attachments/assets/45c209a6-4d77-43b7-9927-2930e2648f12" />
 
 + Get All Articles
+  
   <img width="1380" height="880" alt="Screenshot 2025-12-29 134045" src="https://github.com/user-attachments/assets/0c1851a4-5993-439e-a100-0f396f5a2143" />
 
 + Update Article
+  
   <img width="1382" height="860" alt="Screenshot 2025-12-29 134825" src="https://github.com/user-attachments/assets/04bfe493-1f31-44c9-8877-2e39be0d5b6b" />
 
 + Delete Article
+  
   <img width="1368" height="869" alt="Screenshot 2025-12-29 134906" src="https://github.com/user-attachments/assets/61384271-3072-4b54-9121-6000cb98ef06" />
 
 
