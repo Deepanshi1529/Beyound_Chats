@@ -83,6 +83,59 @@ The scraper is storing tags as a plain string like "ai chatbot" instead of prope
   
   <img width="1368" height="869" alt="Screenshot 2025-12-29 134906" src="https://github.com/user-attachments/assets/61384271-3072-4b54-9121-6000cb98ef06" />
 
+# Task - 2
+Create a NodeJS based script / project. 
+Fetch the articles from API you created in previous task 
+The script: 
++ Searches this article’s title on Google. 
++ Fetches the first two links from Google Search results that are blogs or articles published by other websites. 
++ Scrapes the main content from these two articles you found on Google Search. 
++ Calls an LLM API to update the original article and make its formatting, content similar to the two new articles that were ranking on top of Google. 
++ Publish the newly generated article using the CRUD APIs created in previous Phase. 
++ Make sure to cite reference articles (that you scraped from Google Search results) at the bottom of the newly generated article. 
 
+# Required Packages Info
++ groq-sdk - Groq AI API integration
++ axios - HTTP client for API calls
++ cheerio - HTML parsing for web scraping
 
+# Project Structure
+```
+project/
+├── index.js                   
+├── package.json               
+├── package-lock.json           
+├── test-gemini.js              # Search functionality test script
+├── .env                        
+├── services/                   # Core service modules
+│   ├── articleService.js       # Database/API article operations
+│   ├── googleSearchService.js  # Google search functionality
+│   ├── scraperService.js       # Web scraping utilities
+│   └── llmService.js           # AI/LLM integration
+└── utils/
+    └── logger.js                            
+```
 
+# WorkFlow Process
++ Fetch Articles: Retrieves articles from the database/API
++ Search Competitors: Extracts keywords and searches Google
++ Scrape Content: Downloads competitor article content
++ AI Optimization: Enhances articles using LLM with competitor insights
++ Add Metadata: Includes citations, tags, and excerpts
++ Publish: Updates the database with optimized content
+
+# Features
++ Smart Search: Extracts keywords from article titles and searches for relevant competitor content
++ Web Scraping: Extracts content from competitor websites
++ AI Optimization: Uses LLM (Groq SDK) to enhance articles with competitor insights
++ Automatic Citations: Adds proper citations and references
++ Fallback Mechanisms: Manual fallback URLs when search fails
++ Test Mode: Optional test mode to skip external API calls
++ Detailed Logging: Step-by-step progress tracking
++ Safety Limits: Content length validation and rate limiting
+
+# Running the Application
+```
+npm run dev      # to run the beyound_chats project
+npm start        # to run the NodeJS_project
+```
