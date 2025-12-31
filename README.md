@@ -139,3 +139,44 @@ project/
 npm run dev      # to run the beyound_chats project
 npm start        # to run the NodeJS_project
 ```
+
+# Task - 3
+Create a small ReactJS-based frontend project that fetches articles from the Laravel APIs and displays them in a responsive, professional UI. (The original articles as well as their update versions) 
+
+# Project Setup and Installing Dependencies
+```
+npx create-react-app article_frontend
+cd article_frontend
+npm install lucide-react
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+```
+
+# Project Structure
+```
+article_frontend/
+├── public/
+│   ├── index.html
+│   └── favicon.ico
+├── src/
+│   ├── App.js              
+│   ├── index.js            
+│   ├── index.css           
+│   └── App.css             
+├── package.json
+├── tailwind.config.js      
+└── postcss.config.js       
+```
+
+#Features
++ Article Search & Filtering - Search by keywords, filter by tags
++ AI Optimization Indicators - Visual badges for enhanced content
++ Modern UI - Built with Tailwind CSS and Lucide React icons
++ Expandable Content - Read full articles with expand/collapse
++ Tag Management- Organize articles with customizable tags
+
+# Running the setup
+```
+Start the CRUD API: npm run dev
+Start React app: npm start
+```
