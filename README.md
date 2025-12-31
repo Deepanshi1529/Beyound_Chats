@@ -102,18 +102,18 @@ The script:
 # Project Structure
 ```
 project/
-├── index.js                    
-├── package.json                
+├── index.js                   
+├── package.json               
 ├── package-lock.json           
-├── test-gemini.js              
+├── test-gemini.js              # Search functionality test script
 ├── .env                        
-├── services/                   
-│   ├── articleService.js       
-│   ├── googleSearchService.js  
-│   ├── scraperService.js       
-│   └── llmService.js          
+├── services/                   # Core service modules
+│   ├── articleService.js       # Database/API article operations
+│   ├── googleSearchService.js  # Google search functionality
+│   ├── scraperService.js       # Web scraping utilities
+│   └── llmService.js           # AI/LLM integration
 └── utils/
-    └── logger.js               
+    └── logger.js                            
 ```
 
 # WorkFlow Process
