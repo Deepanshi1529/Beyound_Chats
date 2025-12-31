@@ -168,7 +168,7 @@ article_frontend/
 └── postcss.config.js       
 ```
 
-#Features
+# Features
 + Article Search & Filtering - Search by keywords, filter by tags
 + AI Optimization Indicators - Visual badges for enhanced content
 + Modern UI - Built with Tailwind CSS and Lucide React icons
