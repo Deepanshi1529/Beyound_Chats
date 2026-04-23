@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Calendar, User, Tag, ExternalLink, Zap, BookOpen, TrendingUp } from 'lucide-react';
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'https://your-app.onrender.com/api';git
 
 export default function ArticleViewer() {
   const [articles, setArticles] = useState([]);
