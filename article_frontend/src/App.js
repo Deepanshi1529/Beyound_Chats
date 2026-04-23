@@ -42,8 +42,6 @@ export default function ArticleViewer() {
 
   const allTags = [...new Set(articles.flatMap(a => a.tags || []))];
 
-  const isOptimized = (article) => article.tags?.includes('optimized');
-
 
   if (loading) {
     return (
