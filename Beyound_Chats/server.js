@@ -1,7 +1,7 @@
-
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const path = require('path');
 require('dotenv').config();
 
 const articleRoutes = require('./routes/articleRoutes');
@@ -12,11 +12,14 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'https://beyound-chats-jade.vercel.app',
+    origin: process.env.FRONTEND_URL || '*',
     credentials: true
 }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Serve static frontend files (React build)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Test database connection
 db.query('SELECT 1')
@@ -28,24 +31,29 @@ db.query('SELECT 1')
         process.exit(1);
     });
 
-// Routes
-app.use('/api/articles', articleRoutes);
+// API Routes
+app.use('/api', articleRoutes);
 
-// Health check route
+// Health check
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Server is running' });
 });
 
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({
-        success: false,
-        message: 'Route not found'
-    });
+// Serve React app for all other routes (client-side routing)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something went wrong!' });
 });
 
 // Start server
 app.listen(PORT, () => {
     console.log(`✓ Server running on http://localhost:${PORT}`);
-    console.log(`✓ API Documentation: http://localhost:${PORT}/api/articles`);
+    console.log(`✓ Frontend served from ${path.join(__dirname, 'public')}`);
 });
+
+module.exports = app;

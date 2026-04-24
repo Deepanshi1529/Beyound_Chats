@@ -1,29 +1,17 @@
-// controllers/articleController.js - COMPLETE FILE WITH DATE FIX
 const db = require('../config/database');
 const scraper = require('../services/scraper');
 
-// Helper function to safely parse tags
+// Helper to safely parse tags
 function safeParseTags(tagsValue) {
-    if (!tagsValue) {
-        return [];
-    }
-
-    if (Array.isArray(tagsValue)) {
-        return tagsValue;
-    }
-
+    if (!tagsValue) return [];
+    if (Array.isArray(tagsValue)) return tagsValue;
+    
     const tagsString = String(tagsValue).trim();
-
-    if (tagsString === '') {
-        return [];
-    }
-
+    if (tagsString === '') return [];
+    
     try {
         const parsed = JSON.parse(tagsString);
-        if (Array.isArray(parsed)) {
-            return parsed;
-        }
-        return [parsed];
+        return Array.isArray(parsed) ? parsed : [parsed];
     } catch (e) {
         if (tagsString.includes(',')) {
             return tagsString.split(',').map(t => t.trim()).filter(t => t);
@@ -32,43 +20,28 @@ function safeParseTags(tagsValue) {
     }
 }
 
-// ✅ Helper function to format date for MySQL
-function formatDateForMySQL(dateValue) {
-    if (!dateValue) {
-        return null;
-    }
-
-    // If it's already a simple date string (YYYY-MM-DD), return as-is
+// Format date for PostgreSQL (YYYY-MM-DD)
+function formatDate(dateValue) {
+    if (!dateValue) return null;
     if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
         return dateValue;
     }
-
-    // If it's an ISO string with time (2023-12-10T18:30:00.000Z)
     if (typeof dateValue === 'string' && dateValue.includes('T')) {
-        // Extract just the date part: YYYY-MM-DD
         return dateValue.split('T')[0];
     }
-
-    // If it's a Date object
     if (dateValue instanceof Date) {
         return dateValue.toISOString().split('T')[0];
     }
-
-    // Fallback: try to parse and extract date
     try {
         const date = new Date(dateValue);
-        if (!isNaN(date.getTime())) {
-            return date.toISOString().split('T')[0];
-        }
+        return !isNaN(date.getTime()) ? date.toISOString().split('T')[0] : null;
     } catch (e) {
-        console.error('Error parsing date:', e);
+        return null;
     }
-
-    return null;
 }
 
 class ArticleController {
-    // CREATE - Scrape and store articles
+    // POST /api/scrape - Scrape and store articles
     async scrapeAndStore(req, res) {
         try {
             const articles = await scraper.scrapeOldestArticles();
@@ -77,31 +50,24 @@ class ArticleController {
             for (const article of articles) {
                 const tagsArray = safeParseTags(article.tags);
                 const tagsJson = JSON.stringify(tagsArray);
-                const formattedDate = formatDateForMySQL(article.publish_date);
+                const formattedDate = formatDate(article.publish_date);
 
-                const [result] = await db.query(
+                const result = await db.query(
                     `INSERT INTO articles (title, url, author, publish_date, excerpt, tags, image_url) 
-                     VALUES (?, ?, ?, ?, ?, ?, ?)
-                     ON DUPLICATE KEY UPDATE 
-                     title = VALUES(title),
-                     author = VALUES(author),
-                     publish_date = VALUES(publish_date),
-                     excerpt = VALUES(excerpt),
-                     tags = VALUES(tags),
-                     image_url = VALUES(image_url)`,
-                    [
-                        article.title,
-                        article.url,
-                        article.author,
-                        formattedDate,
-                        article.excerpt,
-                        tagsJson,
-                        article.image_url
-                    ]
+                     VALUES ($1, $2, $3, $4, $5, $6, $7)
+                     ON CONFLICT (url) DO UPDATE SET
+                        title = EXCLUDED.title,
+                        author = EXCLUDED.author,
+                        publish_date = EXCLUDED.publish_date,
+                        excerpt = EXCLUDED.excerpt,
+                        tags = EXCLUDED.tags,
+                        image_url = EXCLUDED.image_url
+                     RETURNING *`,
+                    [article.title, article.url, article.author, formattedDate, article.excerpt, tagsJson, article.image_url]
                 );
                 
                 insertedArticles.push({
-                    id: result.insertId,
+                    id: result.rows[0].id,
                     ...article,
                     tags: tagsArray
                 });
@@ -122,7 +88,7 @@ class ArticleController {
         }
     }
 
-    // CREATE - Add single article manually
+    // POST /api/articles - Create article
     async createArticle(req, res) {
         try {
             const { title, url, author, publish_date, excerpt, tags, image_url } = req.body;
@@ -136,11 +102,12 @@ class ArticleController {
 
             const tagsArray = safeParseTags(tags);
             const tagsJson = JSON.stringify(tagsArray);
-            const formattedDate = formatDateForMySQL(publish_date);
+            const formattedDate = formatDate(publish_date);
 
-            const [result] = await db.query(
+            const result = await db.query(
                 `INSERT INTO articles (title, url, author, publish_date, excerpt, tags, image_url) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)
+                 RETURNING *`,
                 [title, url, author, formattedDate, excerpt, tagsJson, image_url]
             );
 
@@ -148,7 +115,7 @@ class ArticleController {
                 success: true,
                 message: 'Article created successfully',
                 data: {
-                    id: result.insertId,
+                    id: result.rows[0].id,
                     title,
                     url,
                     author,
@@ -159,7 +126,7 @@ class ArticleController {
                 }
             });
         } catch (error) {
-            if (error.code === 'ER_DUP_ENTRY') {
+            if (error.code === '23505') { // PostgreSQL unique violation
                 return res.status(409).json({
                     success: false,
                     message: 'Article with this URL already exists'
@@ -174,19 +141,17 @@ class ArticleController {
         }
     }
 
-    // READ - Get all articles
+    // GET /api/articles - Get all articles
     async getAllArticles(req, res) {
         try {
-            const [articles] = await db.query(
+            const result = await db.query(
                 'SELECT * FROM articles ORDER BY publish_date DESC'
             );
 
-            const parsedArticles = articles.map(article => {
-                return {
-                    ...article,
-                    tags: safeParseTags(article.tags)
-                };
-            });
+            const parsedArticles = result.rows.map(article => ({
+                ...article,
+                tags: safeParseTags(article.tags)
+            }));
 
             res.status(200).json({
                 success: true,
@@ -203,17 +168,17 @@ class ArticleController {
         }
     }
 
-    // READ - Get single article by ID
+    // GET /api/articles/:id - Get single article
     async getArticleById(req, res) {
         try {
             const { id } = req.params;
 
-            const [articles] = await db.query(
-                'SELECT * FROM articles WHERE id = ?',
+            const result = await db.query(
+                'SELECT * FROM articles WHERE id = $1',
                 [id]
             );
 
-            if (articles.length === 0) {
+            if (result.rows.length === 0) {
                 return res.status(404).json({
                     success: false,
                     message: 'Article not found'
@@ -221,8 +186,8 @@ class ArticleController {
             }
 
             const article = {
-                ...articles[0],
-                tags: safeParseTags(articles[0].tags)
+                ...result.rows[0],
+                tags: safeParseTags(result.rows[0].tags)
             };
 
             res.status(200).json({
@@ -239,28 +204,26 @@ class ArticleController {
         }
     }
 
-    // UPDATE - Update article by ID
+    // PUT /api/articles/:id - Update article
     async updateArticle(req, res) {
         try {
             const { id } = req.params;
             const { title, url, author, publish_date, excerpt, tags, image_url } = req.body;
 
-            // ✅ Format date for MySQL
-            const formattedDate = formatDateForMySQL(publish_date);
-
-            // ✅ Format tags as JSON
+            const formattedDate = formatDate(publish_date);
             const tagsArray = safeParseTags(tags);
             const tagsJson = JSON.stringify(tagsArray);
 
-            const [result] = await db.query(
+            const result = await db.query(
                 `UPDATE articles 
-                 SET title = ?, url = ?, author = ?, publish_date = ?, 
-                     excerpt = ?, tags = ?, image_url = ?
-                 WHERE id = ?`,
+                 SET title = $1, url = $2, author = $3, publish_date = $4, 
+                     excerpt = $5, tags = $6, image_url = $7
+                 WHERE id = $8
+                 RETURNING *`,
                 [title, url, author, formattedDate, excerpt, tagsJson, image_url, id]
             );
 
-            if (result.affectedRows === 0) {
+            if (result.rows.length === 0) {
                 return res.status(404).json({
                     success: false,
                     message: 'Article not found'
@@ -291,17 +254,17 @@ class ArticleController {
         }
     }
 
-    // DELETE - Delete article by ID
+    // DELETE /api/articles/:id - Delete article
     async deleteArticle(req, res) {
         try {
             const { id } = req.params;
 
-            const [result] = await db.query(
-                'DELETE FROM articles WHERE id = ?',
+            const result = await db.query(
+                'DELETE FROM articles WHERE id = $1',
                 [id]
             );
 
-            if (result.affectedRows === 0) {
+            if (result.rowCount === 0) {
                 return res.status(404).json({
                     success: false,
                     message: 'Article not found'
