@@ -39,11 +39,6 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Server is running' });
 });
 
-// Serve React app for all other routes (client-side routing)
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
 // Error handler
 app.use((err, req, res, next) => {
     console.error(err.stack);
