@@ -21,10 +21,23 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Serve static frontend files (React build)
 app.use(express.static(path.join(__dirname, 'public')));
 
+// API Routes
+app.use('/api', articleRoutes);
+
+// Health check
+app.get('/health', (req, res) => {
+    res.json({ status: 'OK', message: 'Server is running' });
+});
+
+// Error handler
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something went wrong!' });
+});
+
 // Initialize database tables
 async function initializeDatabase() {
     try {
-        // Create articles table if it doesn't exist
         const createTableQuery = `
             CREATE TABLE IF NOT EXISTS articles (
                 id SERIAL PRIMARY KEY,
@@ -48,46 +61,21 @@ async function initializeDatabase() {
 }
 
 // Start server after database is ready
-async function startServer() {
+async function start() {
     try {
-        // Test database connection
         await db.query('SELECT 1');
         console.log('✓ Database connected successfully');
-
-        // Initialize schema
         await initializeDatabase();
-
-        // Start listening
         app.listen(PORT, () => {
             console.log(`✓ Server running on http://localhost:${PORT}`);
             console.log(`✓ Frontend served from ${path.join(__dirname, 'public')}`);
         });
     } catch (err) {
-        console.error('✗ Database connection failed:', err.message);
+        console.error('✗ Server start failed:', err.message);
         process.exit(1);
     }
 }
 
-startServer();
-
-// API Routes
-app.use('/api', articleRoutes);
-
-// Health check
-app.get('/health', (req, res) => {
-    res.json({ status: 'OK', message: 'Server is running' });
-});
-
-// Error handler
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
-});
-
-// Start server
-app.listen(PORT, () => {
-    console.log(`✓ Server running on http://localhost:${PORT}`);
-    console.log(`✓ Frontend served from ${path.join(__dirname, 'public')}`);
-});
+start();
 
 module.exports = app;
