@@ -147,7 +147,7 @@ export default function ArticleViewer() {
             Powered by Groq LLM • DuckDuckGo Search • Node.js
           </p>
           <p className="text-gray-500 text-sm mt-2">
-            © 2025 Article Optimizer. All rights reserved.
+            © 2026 Article Optimizer. All rights reserved.
           </p>
         </div>
       </footer>

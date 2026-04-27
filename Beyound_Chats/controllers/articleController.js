@@ -70,10 +70,31 @@ class ArticleController {
                 
                 insertedArticles.push({
                     id: result.rows[0].id,
-                    ...article,
-                    tags: tagsArray
+                    title: article.title,
+                    url: article.url,
+                    author: article.author,
+                    publish_date: formattedDate,
+                    excerpt: article.excerpt,
+                    content: content,
+                    tags: tagsArray,
+                    image_url: article.image_url
                 });
             }
+
+            res.status(201).json({
+                success: true,
+                message: `Successfully scraped and stored ${insertedArticles.length} articles`,
+                data: insertedArticles
+            });
+        } catch (error) {
+            console.error('Error in scrapeAndStore:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error scraping and storing articles',
+                error: error.message
+            });
+        }
+    }
 
             res.status(201).json({
                 success: true,
