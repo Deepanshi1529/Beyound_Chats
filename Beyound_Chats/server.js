@@ -21,10 +21,37 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Serve static frontend files (React build)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Test database connection
+// Initialize database tables
+async function initializeDatabase() {
+    try {
+        // Create articles table if it doesn't exist
+        const createTableQuery = `
+            CREATE TABLE IF NOT EXISTS articles (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(500) NOT NULL,
+                url VARCHAR(500) UNIQUE NOT NULL,
+                author VARCHAR(255),
+                publish_date DATE,
+                excerpt TEXT,
+                tags JSONB,
+                image_url VARCHAR(500),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `;
+        await db.query(createTableQuery);
+        console.log('✓ Database schema initialized');
+    } catch (error) {
+        console.error('✗ Database initialization failed:', error.message);
+        throw error;
+    }
+}
+
+// Test database connection and initialize schema
 db.query('SELECT 1')
-    .then(() => {
+    .then(async () => {
         console.log('✓ Database connected successfully');
+        await initializeDatabase();
     })
     .catch(err => {
         console.error('✗ Database connection failed:', err.message);
