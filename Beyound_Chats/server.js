@@ -26,7 +26,7 @@ app.use('/api', articleRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
-    res.json({ status: 'OK', message: 'Server is running' });
+    res.json({ status: 'OK', message: 'Server is running', version: '2.0.1' });
 });
 
 // Error handler
