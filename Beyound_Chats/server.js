@@ -12,8 +12,8 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-    origin: process.env.FRONTEND_URL || '*',
-    credentials: true
+    origin: process.env.FRONTEND_URL || true,
+    credentials: false
 }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -47,16 +47,28 @@ async function initializeDatabase() {
     }
 }
 
-// Test database connection and initialize schema
-db.query('SELECT 1')
-    .then(async () => {
+// Start server after database is ready
+async function startServer() {
+    try {
+        // Test database connection
+        await db.query('SELECT 1');
         console.log('✓ Database connected successfully');
+
+        // Initialize schema
         await initializeDatabase();
-    })
-    .catch(err => {
+
+        // Start listening
+        app.listen(PORT, () => {
+            console.log(`✓ Server running on http://localhost:${PORT}`);
+            console.log(`✓ Frontend served from ${path.join(__dirname, 'public')}`);
+        });
+    } catch (err) {
         console.error('✗ Database connection failed:', err.message);
         process.exit(1);
-    });
+    }
+}
+
+startServer();
 
 // API Routes
 app.use('/api', articleRoutes);
