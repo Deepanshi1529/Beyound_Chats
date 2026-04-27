@@ -33,10 +33,47 @@ class LLMService {
     }
   }
 
-  // ✅ EXISTS (already correct)
+  // Build comprehensive prompt with competitor analysis
   buildPrompt(originalArticle, competitorArticles) {
-    return `Write a detailed, SEO-optimized article on:
-"${originalArticle.title}"`;
+    const competitorSummaries = competitorArticles.map((art, idx) => 
+      `Article ${idx + 1}:\nTitle: ${art.title}\nContent: ${art.content.substring(0, 2000)}`
+    ).join('\n\n---\n\n');
+
+    return `You are an expert SEO content writer. Your task is to rewrite the given article to match the quality, formatting, and depth of top-ranking competitor articles.
+
+=== ORIGINAL ARTICLE ===
+Title: ${originalArticle.title}
+Excerpt: ${originalArticle.excerpt}
+Existing Content: ${originalArticle.content || 'No content available'}
+
+=== COMPETITOR ARTICLES (Top Google Results) ===
+${competitorSummaries}
+
+=== INSTRUCTIONS ===
+
+1. **Structure & Formatting**: Analyze how the competitor articles structure their content (headings, subheadings, paragraphs, bullet points, examples). Match that formatting style.
+
+2. **Content Depth**: Expand on the original article with detailed explanations, real-world examples, and actionable insights similar to the competitors.
+
+3. **SEO Optimization**: 
+   - Include relevant keywords naturally throughout
+   - Use clear, descriptive headings (H2, H3)
+   - Add meta description territory
+   - Include FAQ section if competitors use them
+
+4. **Engagement Elements**: 
+   - Start with a compelling introduction
+   - Use bullet points for lists
+   - Add call-to-action elements
+   - Include practical tips/step-by-step guides if competitors do
+
+5. **Length**: Target 1500-2500 words (match competitor depth)
+
+6. **Tone**: Match the tone of competing articles (professional, conversational, technical, etc.)
+
+7. **Unique Value**: While matching format, ensure your version is more comprehensive and valuable than competitors
+
+Write the complete rewritten article in Markdown format. The article should be ready to publish and should significantly improve upon the original while matching the quality of top-ranking pages.`;
   }
 
   // ✅ ADD THIS METHOD (FIXES YOUR ERROR)
