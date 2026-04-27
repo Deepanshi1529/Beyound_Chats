@@ -51,19 +51,21 @@ class ArticleController {
                 const tagsArray = safeParseTags(article.tags);
                 const tagsJson = JSON.stringify(tagsArray);
                 const formattedDate = formatDate(article.publish_date);
+                const content = article.content || article.excerpt;
 
                 const result = await db.query(
-                    `INSERT INTO articles (title, url, author, publish_date, excerpt, tags, image_url) 
-                     VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    `INSERT INTO articles (title, url, author, publish_date, excerpt, content, tags, image_url) 
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                      ON CONFLICT (url) DO UPDATE SET
                         title = EXCLUDED.title,
                         author = EXCLUDED.author,
                         publish_date = EXCLUDED.publish_date,
                         excerpt = EXCLUDED.excerpt,
+                        content = EXCLUDED.content,
                         tags = EXCLUDED.tags,
                         image_url = EXCLUDED.image_url
                      RETURNING *`,
-                    [article.title, article.url, article.author, formattedDate, article.excerpt, tagsJson, article.image_url]
+                    [article.title, article.url, article.author, formattedDate, article.excerpt, content, tagsJson, article.image_url]
                 );
                 
                 insertedArticles.push({
@@ -91,7 +93,7 @@ class ArticleController {
     // POST /api/articles - Create article
     async createArticle(req, res) {
         try {
-            const { title, url, author, publish_date, excerpt, tags, image_url } = req.body;
+            const { title, url, author, publish_date, excerpt, content, tags, image_url } = req.body;
 
             if (!title || !url) {
                 return res.status(400).json({
@@ -103,12 +105,13 @@ class ArticleController {
             const tagsArray = safeParseTags(tags);
             const tagsJson = JSON.stringify(tagsArray);
             const formattedDate = formatDate(publish_date);
+            const articleContent = content || excerpt;
 
             const result = await db.query(
-                `INSERT INTO articles (title, url, author, publish_date, excerpt, tags, image_url) 
-                 VALUES ($1, $2, $3, $4, $5, $6, $7)
+                `INSERT INTO articles (title, url, author, publish_date, excerpt, content, tags, image_url) 
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                  RETURNING *`,
-                [title, url, author, formattedDate, excerpt, tagsJson, image_url]
+                [title, url, author, formattedDate, excerpt, articleContent, tagsJson, image_url]
             );
 
             res.status(201).json({
@@ -121,6 +124,7 @@ class ArticleController {
                     author,
                     publish_date: formattedDate,
                     excerpt,
+                    content: articleContent,
                     tags: tagsArray,
                     image_url
                 }
@@ -208,19 +212,20 @@ class ArticleController {
     async updateArticle(req, res) {
         try {
             const { id } = req.params;
-            const { title, url, author, publish_date, excerpt, tags, image_url } = req.body;
+            const { title, url, author, publish_date, excerpt, content, tags, image_url } = req.body;
 
             const formattedDate = formatDate(publish_date);
             const tagsArray = safeParseTags(tags);
             const tagsJson = JSON.stringify(tagsArray);
+            const articleContent = content || excerpt;
 
             const result = await db.query(
                 `UPDATE articles 
                  SET title = $1, url = $2, author = $3, publish_date = $4, 
-                     excerpt = $5, tags = $6, image_url = $7
-                 WHERE id = $8
+                     excerpt = $5, content = $6, tags = $7, image_url = $8
+                 WHERE id = $9
                  RETURNING *`,
-                [title, url, author, formattedDate, excerpt, tagsJson, image_url, id]
+                [title, url, author, formattedDate, excerpt, articleContent, tagsJson, image_url, id]
             );
 
             if (result.rows.length === 0) {
@@ -240,6 +245,7 @@ class ArticleController {
                     author,
                     publish_date: formattedDate,
                     excerpt,
+                    content: articleContent,
                     tags: tagsArray,
                     image_url
                 }

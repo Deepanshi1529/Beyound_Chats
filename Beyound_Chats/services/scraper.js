@@ -1,4 +1,4 @@
-
+ 
 const axios = require('axios');
 const cheerio = require('cheerio');
 
@@ -9,7 +9,15 @@ class BlogScraper {
 
     async scrapeBlogListPage(pageUrl) {
         try {
-            const response = await axios.get(pageUrl);
+            const response = await axios.get(pageUrl, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9'
+                },
+                timeout: 15000
+            });
+            
             const $ = cheerio.load(response.data);
             const articles = [];
 
@@ -52,13 +60,73 @@ class BlogScraper {
         }
     }
 
-    parseDate(dateString) {
-        if (!dateString) return null;
-        
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return null;
-        
-        return date.toISOString().split('T')[0];
+    async scrapeArticleContent(url) {
+        try {
+            const fullUrl = url.startsWith('http') ? url : `${this.baseUrl}${url}`;
+            const response = await axios.get(fullUrl, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                    'Accept-Language': 'en-US,en;q=0.9',
+                    'Accept-Encoding': 'gzip, deflate, br',
+                    'Connection': 'keep-alive',
+                    'Upgrade-Insecure-Requests': '1'
+                },
+                timeout: 30000,
+                maxRedirects: 5
+            });
+
+            const $ = cheerio.load(response.data);
+            
+            // Remove unwanted elements
+            $('script, style, nav, footer, header, aside, .advertisement, .ads, iframe, .cookie-banner').remove();
+
+            // Try multiple selectors for article content
+            const contentSelectors = [
+                'article',
+                '[role="main"]',
+                '.article-content',
+                '.post-content',
+                '.entry-content',
+                '.content',
+                'main',
+                '.main-content',
+                '#content',
+                '.blog-content',
+                '.post-body'
+            ];
+
+            let content = '';
+            for (const selector of contentSelectors) {
+                const element = $(selector).first();
+                if (element.length) {
+                    content = element.text();
+                    if (content.length > 500) break;
+                }
+            }
+
+            // Fallback: get all paragraph text
+            if (!content || content.length < 500) {
+                content = $('p').map((i, el) => $(el).text()).get().join('\n');
+            }
+
+            // Clean up content
+            content = content
+                .replace(/\s+/g, ' ')
+                .replace(/\n+/g, '\n')
+                .trim();
+
+            // Only return if we got substantial content
+            if (content.length < 300) {
+                console.warn(`⚠ Insufficient content from ${url} (${content.length} chars)`);
+                return null;
+            }
+            
+            return content.substring(0, 10000);
+        } catch (error) {
+            console.error(`Error scraping article content from ${url}:`, error.message);
+            return null;
+        }
     }
 
     async scrapeOldestArticles() {
@@ -74,7 +142,40 @@ class BlogScraper {
 
         // Combine and get first 5
         const allArticles = [...page15Articles, ...page14Articles];
-        return allArticles.slice(0, 5);
+        const selectedArticles = allArticles.slice(0, 5);
+
+        // Now fetch full content for each article
+        console.log('Fetching full article content...');
+        for (const article of selectedArticles) {
+            const fullUrl = article.url.startsWith('http') ? article.url : `${this.baseUrl}${article.url}`;
+            console.log(`  Scraping content: ${article.title}`);
+            article.content = await this.scrapeArticleContent(fullUrl);
+            
+            if (article.content) {
+                console.log(`  ✓ Got ${article.content.length} characters`);
+            } else {
+                console.log(`  ⚠ No content found, using excerpt`);
+                article.content = article.excerpt;
+            }
+            
+            // Delay to be respectful
+            await this.delay(2000);
+        }
+
+        return selectedArticles;
+    }
+
+    parseDate(dateString) {
+        if (!dateString) return null;
+        
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return null;
+        
+        return date.toISOString().split('T')[0];
+    }
+
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 }
 

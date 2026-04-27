@@ -38,6 +38,7 @@ app.use((err, req, res, next) => {
 // Initialize database tables
 async function initializeDatabase() {
     try {
+        // Create articles table if it doesn't exist
         const createTableQuery = `
             CREATE TABLE IF NOT EXISTS articles (
                 id SERIAL PRIMARY KEY,
@@ -46,6 +47,7 @@ async function initializeDatabase() {
                 author VARCHAR(255),
                 publish_date DATE,
                 excerpt TEXT,
+                content TEXT,
                 tags JSONB,
                 image_url VARCHAR(500),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
